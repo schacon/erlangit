@@ -1,0 +1,17 @@
+ergit
+====================
+
+ergit cat-file (commit, tree, blob, tag)
+
+ergit log
+
+ergit status
+ergit diff
+
+ergit add
+ergit stage
+ergit commit
+
+ergit push
+
+ergit serve
