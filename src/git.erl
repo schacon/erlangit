@@ -85,11 +85,19 @@ get_packfile_object_data(Git, ObjectSha) ->
 
 get_packfile_with_object(Git, [Index|Rest], ObjectSha) ->
   PackIndex = git_dir(Git) ++ "/objects/pack/" ++ Index,
+  io:fwrite("Looking for ~p in ~p~n", [ObjectSha, PackIndex]),
   case file:read_file(PackIndex) of
     {ok, Data} ->
       case packindex:extract_packfile_index(Data) of
         {ok, IndexData} ->
-          io:fwrite("PackIndex Size:~p~n", [IndexData#index.size]);
+          io:fwrite("PackIndex Size:~p~n", [IndexData#index.size]),
+          io:fwrite("IndexData:~p~n", [IndexData]),
+          case packindex:object_offset(IndexData, ObjectSha) of
+            {ok, Offset} ->
+              io:fwrite("Object Offset:~p~n", [Offset]);
+            not_found ->
+              get_packfile_with_object(Git, Rest, ObjectSha)
+          end;
         Else ->
           io:fwrite("Invalid, Biatch~p~n", [Else]),
           invalid

@@ -3,9 +3,16 @@
 %%
 
 -module(packindex).
--export([extract_packfile_index/1]).
+-export([extract_packfile_index/1, object_offset/2]).
 
 -include("packindex.hrl").
+
+
+%%%
+% get an object offset from an index record
+%%%
+object_offset(Index, ObjectSha) ->
+  not_found.
 
 %%%
 % extract a sha offset from packfile index data
@@ -22,7 +29,7 @@ extract_packfile_index(Data) ->
   {PackCs, Data8} = split_binary(Data7, 20),
   {_IdxCs, _Empty} = split_binary(Data8, 20),
   Index = #index{header=Header, version=Version, size=Size, fanout=FanoutTable, 
-    shalist=ShaList, crclist=CrcList, offsets=OffsetList, packcs=PackCs},
+    shalist=ShaList, crclist=CrcList, offsets=OffsetList, packcs=hex:bin_to_hexstr(PackCs)},
   {ok, Index}.
 
 %%%
@@ -57,7 +64,8 @@ extract_sha_list(IndexData, Size, Size, Listing) ->
   {lists:reverse(Listing), IndexData};
 extract_sha_list(IndexData, Size, Total, Listing) ->
   {Sha, IndexDataRem} = split_binary(IndexData, 20), % SHA
-  extract_sha_list(IndexDataRem, Size, Total + 1, [Sha|Listing]).
+  HexSha = hex:bin_to_hexstr(Sha),
+  extract_sha_list(IndexDataRem, Size, Total + 1, [HexSha|Listing]).
 
 %%%
 % extract fanout table from packfile index
