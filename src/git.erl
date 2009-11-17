@@ -85,7 +85,7 @@ get_packfile_with_object(Git, [Index|Rest], ObjectSha) ->
   PackIndex = git_dir(Git) ++ "/objects/pack/" ++ Index,
   case file:read_file(PackIndex) of
     {ok, Data} ->
-      case extract_packfile_offset(Data, ObjectSha) of
+      case packindex:extract_packfile_offset(Data, ObjectSha) of
         {ok, Offset} ->
           {ok, Offset};
         _Else ->
@@ -96,25 +96,6 @@ get_packfile_with_object(Git, [Index|Rest], ObjectSha) ->
   end;
 get_packfile_with_object(Git, [], ObjectSha) ->
   not_found.
-
-extract_packfile_offset(Data, ObjectSha) ->
-  {Header, Data2}  = split_binary(Data, 4),  % \377tOc
-  {Header2, Data3} = split_binary(Data2, 4), % 0002
-  {FanoutTable, Size, Data4} = get_packfile_index_fanout(Data3),
-  io:fwrite("Offsets:~p~n~p~n", [FanoutTable, Size]),
-  invalid.
-
-get_packfile_index_fanout(IndexData) ->
-  get_packfile_index_fanout(IndexData, 0, []).
-
-get_packfile_index_fanout(IndexData, 255, Fanout) ->
-  {Size, IndexDataRem} = split_binary(IndexData, 4), % 0002
-  <<SizeInt:32>> = Size,
-  {lists:reverse(Fanout), SizeInt, IndexDataRem};
-get_packfile_index_fanout(IndexData, Count, Fanout) ->
-  {Fan, IndexDataRem} = split_binary(IndexData, 4), % fanout entry
-  <<FanInt:32>> = Fan,
-  get_packfile_index_fanout(IndexDataRem, Count + 1, [FanInt|Fanout]).
 
 string_ends_with(File, Ending) ->  
   FileEnding = string:substr(File, length(File) - length(Ending) + 1, length(Ending)),
