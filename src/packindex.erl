@@ -3,23 +3,27 @@
 %%
 
 -module(packindex).
--export([extract_packfile_offset/2]).
+-export([extract_packfile_index/1]).
+
+-include("packindex.hrl").
 
 %%%
 % extract a sha offset from packfile index data
+% TODO: check to see if this is version 1 or version 2 (currently only v2)
+% TODO: parse large offset section if it exists (curr. assumes it does not)
 %%%
-extract_packfile_offset(Data, ObjectSha) ->
+extract_packfile_index(Data) ->
   {Header, Data2}  = split_binary(Data, 4),  % \377tOc
-  {Header2, Data3} = split_binary(Data2, 4), % 0002
+  {Version, Data3} = split_binary(Data2, 4), % 0002
   {FanoutTable, Size, Data4} = extract_fanout(Data3),
-  io:fwrite("Offsets:~p~n~p~n", [FanoutTable, Size]),
   {ShaList, Data5} = extract_sha_list(Data4, Size),
-  io:fwrite("ShaList:~p~n~p~n", [ShaList, length(ShaList)]),
   {CrcList, Data6} = extract_crc(Data5, Size),
-  io:fwrite("CrcList:~p~n~p~n", [CrcList, length(CrcList)]),
   {OffsetList, Data7} = extract_offsets(Data6, Size),
-  io:fwrite("OffsetList:~p~n~p~n", [OffsetList, length(OffsetList)]),
-  invalid.
+  {PackCs, Data8} = split_binary(Data7, 20),
+  {_IdxCs, _Empty} = split_binary(Data8, 20),
+  Index = #index{header=Header, version=Version, size=Size, fanout=FanoutTable, 
+    shalist=ShaList, crclist=CrcList, offsets=OffsetList, packcs=PackCs},
+  {ok, Index}.
 
 %%%
 % extract offset list from packfile index

@@ -5,6 +5,8 @@
 -module(git).
 -export([open/1, read_object/2]).
 
+-include("packindex.hrl").
+
 %%-define(cassandra_ZERO, 0).
 
 %-record(git_dir, {path}).
@@ -85,10 +87,11 @@ get_packfile_with_object(Git, [Index|Rest], ObjectSha) ->
   PackIndex = git_dir(Git) ++ "/objects/pack/" ++ Index,
   case file:read_file(PackIndex) of
     {ok, Data} ->
-      case packindex:extract_packfile_offset(Data, ObjectSha) of
-        {ok, Offset} ->
-          {ok, Offset};
-        _Else ->
+      case packindex:extract_packfile_index(Data) of
+        {ok, IndexData} ->
+          io:fwrite("PackIndex Size:~p~n", [IndexData#index.size]);
+        Else ->
+          io:fwrite("Invalid, Biatch~p~n", [Else]),
           invalid
       end;
     _Else ->
