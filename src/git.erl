@@ -30,10 +30,8 @@ print_log(Git, Ref) ->
 
 read_object(Git, ObjectSha) ->
   RawData = get_object_data(Git, ObjectSha),
-  {Type, Size, Data} = extract_object_data(RawData),
-  % de-zlib the data
-  % return object data
-  {Type, Size, Data}.
+  extract_object_data(RawData).
+
 
 %% TODO: make this more efficient - this is ridiculous
 %%       should be able to do this as a binary
@@ -62,5 +60,69 @@ get_object_data(Git, ObjectSha) ->
     {ok, Data} ->
       Data;
     _Else ->
-      invalid
+      get_packfile_object_data(Git, ObjectSha)
   end.
+
+get_packfile_object_data(Git, ObjectSha) ->
+  PackIndex = git_dir(Git) ++ "/objects/pack",
+  case file:list_dir(PackIndex) of
+    {ok, Filenames} ->
+      Indexes = lists:filter(fun(X) -> string_ends_with(X, ".idx") end, Filenames),
+      case get_packfile_with_object(Git, Indexes, ObjectSha) of
+        {ok, Packfile} ->
+          io:fwrite("Packfile:~p~n", [Packfile]);
+        _Else ->
+          invalid
+      end;
+    _Else ->
+      invalid
+  end,
+  FileName = git_dir(Git) ++ "/objects/8d/47f3435ce5dfd0b2ab5758590c2db21b5294b4",
+  {ok, Data} = file:read_file(FileName),
+  Data.
+
+get_packfile_with_object(Git, [Index|Rest], ObjectSha) ->
+  PackIndex = git_dir(Git) ++ "/objects/pack/" ++ Index,
+  case file:read_file(PackIndex) of
+    {ok, Data} ->
+      case extract_packfile_offset(Data, ObjectSha) of
+        {ok, Offset} ->
+          {ok, Offset};
+        _Else ->
+          invalid
+      end;
+    _Else ->
+      invalid
+  end;
+get_packfile_with_object(Git, [], ObjectSha) ->
+  not_found.
+
+extract_packfile_offset(Data, ObjectSha) ->
+  {Header, Data2}  = split_binary(Data, 4),  % \377tOc
+  {Header2, Data3} = split_binary(Data2, 4), % 0002
+  {FanoutTable, Size, Data4} = get_packfile_index_fanout(Data3),
+  io:fwrite("Offsets:~p~n~p~n", [FanoutTable, Size]),
+  invalid.
+
+get_packfile_index_fanout(IndexData) ->
+  get_packfile_index_fanout(IndexData, 0, []).
+
+get_packfile_index_fanout(IndexData, 255, Fanout) ->
+  {Size, IndexDataRem} = split_binary(IndexData, 4), % 0002
+  <<SizeInt:32>> = Size,
+  {lists:reverse(Fanout), SizeInt, IndexDataRem};
+get_packfile_index_fanout(IndexData, Count, Fanout) ->
+  {Fan, IndexDataRem} = split_binary(IndexData, 4), % fanout entry
+  <<FanInt:32>> = Fan,
+  get_packfile_index_fanout(IndexDataRem, Count + 1, [FanInt|Fanout]).
+
+string_ends_with(File, Ending) ->  
+  FileEnding = string:substr(File, length(File) - length(Ending) + 1, length(Ending)),
+  FileEnding =:= Ending.
+
+
+
+
+
+
+
