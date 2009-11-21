@@ -7,12 +7,17 @@
 
 -include("packindex.hrl").
 
-
 %%%
 % get an object offset from an index record
 %%%
 object_offset(Index, ObjectSha) ->
-  not_found.
+  ShaOffsets = lists:zip(Index#index.shalist, Index#index.offsets),
+  case lists:keyfind(ObjectSha, 1, ShaOffsets) of
+    {ObjectSha, Offset} ->
+      {ok, Offset};
+    _Else ->
+      not_found
+  end.
 
 %%%
 % extract a sha offset from packfile index data

@@ -71,8 +71,9 @@ get_packfile_object_data(Git, ObjectSha) ->
     {ok, Filenames} ->
       Indexes = lists:filter(fun(X) -> string_ends_with(X, ".idx") end, Filenames),
       case get_packfile_with_object(Git, Indexes, ObjectSha) of
-        {ok, Packfile} ->
-          io:fwrite("Packfile:~p~n", [Packfile]);
+        {ok, Packfile, Offset} ->
+          PackFilePath = git_dir(Git) ++ "/objects/pack/" ++ Packfile,
+          packfile:get_packfile_data(PackFilePath, Offset);
         _Else ->
           invalid
       end;
@@ -94,7 +95,8 @@ get_packfile_with_object(Git, [Index|Rest], ObjectSha) ->
           io:fwrite("IndexData:~p~n", [IndexData]),
           case packindex:object_offset(IndexData, ObjectSha) of
             {ok, Offset} ->
-              io:fwrite("Object Offset:~p~n", [Offset]);
+              Packfile = replace_string_ending(Index, ".idx", ".pack"),
+              {ok, Packfile, Offset};
             not_found ->
               get_packfile_with_object(Git, Rest, ObjectSha)
           end;
@@ -107,6 +109,10 @@ get_packfile_with_object(Git, [Index|Rest], ObjectSha) ->
   end;
 get_packfile_with_object(Git, [], ObjectSha) ->
   not_found.
+
+replace_string_ending(String, Ending, NewEnding) ->
+  Base = string:substr(String, 1, length(String) - length(Ending)),
+  Base ++ NewEnding.
 
 string_ends_with(File, Ending) ->  
   FileEnding = string:substr(File, length(File) - length(Ending) + 1, length(Ending)),
