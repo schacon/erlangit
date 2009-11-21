@@ -30,14 +30,27 @@ print_log(Git, Ref) ->
   % traverse the reference, printing out all the log information to stdout
   io:fwrite("Log:~n").
 
-read_object(Git, ObjectSha) ->
-  RawData = get_object_data(Git, ObjectSha),
-  extract_object_data(RawData).
+git_dir(Git) ->
+  {Path} = Git,
+  Path.
 
+% get the raw object data out of loose or packed formats
+read_object(Git, ObjectSha) ->
+  % see if the object is loose, read the data
+  % else check the packfile indexes and get the object out of a packfile
+  First = string:substr(ObjectSha, 1, 2),
+  Second = string:substr(ObjectSha, 3, 38),
+  FileName = git_dir(Git) ++ "/objects/" ++ First ++ "/" ++ Second,
+  case file:read_file(FileName) of
+    {ok, Data} ->
+      extract_loose_object_data(Data);
+    _Else ->
+      get_packfile_object_data(Git, ObjectSha)
+  end.
 
 %% TODO: make this more efficient - this is ridiculous
 %%       should be able to do this as a binary
-extract_object_data(CompData) ->
+extract_loose_object_data(CompData) ->
   RawData = binary_to_list(zlib:uncompress(CompData)),
   Split = string:chr(RawData, 0),
   {Header, Data} = lists:split(Split, RawData),
@@ -47,25 +60,8 @@ extract_object_data(CompData) ->
   Type2 = lists:sublist(Type, length(Type) - 1),
   {binary_to_atom(list_to_binary(Type2), latin1), list_to_integer(Size), list_to_binary(Data)}.
 
-git_dir(Git) ->
-  {Path} = Git,
-  Path.
-
-% get the raw object data out of loose or packed formats
-get_object_data(Git, ObjectSha) ->
-  % see if the object is loose, read the data
-  % else check the packfile indexes and get the object out of a packfile
-  First = string:substr(ObjectSha, 1, 2),
-  Second = string:substr(ObjectSha, 3, 38),
-  FileName = git_dir(Git) ++ "/objects/" ++ First ++ "/" ++ Second,
-  case file:read_file(FileName) of
-    {ok, Data} ->
-      Data;
-    _Else ->
-      get_packfile_object_data(Git, ObjectSha)
-  end.
-
 get_packfile_object_data(Git, ObjectSha) ->
+  io:fwrite("SHA:~p~n", [ObjectSha]),
   PackIndex = git_dir(Git) ++ "/objects/pack",
   case file:list_dir(PackIndex) of
     {ok, Filenames} ->
@@ -79,10 +75,7 @@ get_packfile_object_data(Git, ObjectSha) ->
       end;
     _Else ->
       invalid
-  end,
-  FileName = git_dir(Git) ++ "/objects/8d/47f3435ce5dfd0b2ab5758590c2db21b5294b4",
-  {ok, Data} = file:read_file(FileName),
-  Data.
+  end.
 
 get_packfile_with_object(Git, [Index|Rest], ObjectSha) ->
   PackIndex = git_dir(Git) ++ "/objects/pack/" ++ Index,
