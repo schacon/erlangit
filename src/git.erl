@@ -3,7 +3,7 @@
 %%
 
 -module(git).
--export([open/1, read_object/2]).
+-export([open/1, read_object/2, object_exists/2]).
 
 -include("packindex.hrl").
 
@@ -34,19 +34,36 @@ git_dir(Git) ->
   {Path} = Git,
   Path.
 
+object_exists(Git, ObjectSha) ->
+  LoosePath = get_loose_object_path(Git, ObjectSha),
+  case filelib:is_file(LoosePath) of
+    true ->
+      true;
+    false ->
+      case find_packfile_with_object(Git, ObjectSha) of
+        {ok, _PackFilePath, _Offset} ->
+          true;
+        _Else ->
+          false
+      end
+  end.
+
 % get the raw object data out of loose or packed formats
+% see if the object is loose, read the data
+% else check the packfile indexes and get the object out of a packfile
 read_object(Git, ObjectSha) ->
-  % see if the object is loose, read the data
-  % else check the packfile indexes and get the object out of a packfile
-  First = string:substr(ObjectSha, 1, 2),
-  Second = string:substr(ObjectSha, 3, 38),
-  FileName = git_dir(Git) ++ "/objects/" ++ First ++ "/" ++ Second,
-  case file:read_file(FileName) of
+  LoosePath = get_loose_object_path(Git, ObjectSha),
+  case file:read_file(LoosePath) of
     {ok, Data} ->
       extract_loose_object_data(Data);
     _Else ->
       get_packfile_object_data(Git, ObjectSha)
   end.
+
+get_loose_object_path(Git, ObjectSha) ->
+  First = string:substr(ObjectSha, 1, 2),
+  Second = string:substr(ObjectSha, 3, 38),
+  git_dir(Git) ++ "/objects/" ++ First ++ "/" ++ Second.
 
 %% TODO: make this more efficient - this is ridiculous
 %%       should be able to do this as a binary
@@ -61,7 +78,15 @@ extract_loose_object_data(CompData) ->
   {binary_to_atom(list_to_binary(Type2), latin1), list_to_integer(Size), list_to_binary(Data)}.
 
 get_packfile_object_data(Git, ObjectSha) ->
-  io:fwrite("SHA:~p~n", [ObjectSha]),
+  case find_packfile_with_object(Git, ObjectSha) of
+    {ok, PackFilePath, Offset} ->
+      packfile:get_packfile_data(PackFilePath, Offset);
+    _Else ->
+      invalid
+  end.
+
+find_packfile_with_object(Git, ObjectSha) ->
+  %io:fwrite("SHA:~p~n", [ObjectSha]),
   PackIndex = git_dir(Git) ++ "/objects/pack",
   case file:list_dir(PackIndex) of
     {ok, Filenames} ->
@@ -69,7 +94,7 @@ get_packfile_object_data(Git, ObjectSha) ->
       case get_packfile_with_object(Git, Indexes, ObjectSha) of
         {ok, Packfile, Offset} ->
           PackFilePath = git_dir(Git) ++ "/objects/pack/" ++ Packfile,
-          packfile:get_packfile_data(PackFilePath, Offset);
+          {ok, PackFilePath, Offset};
         _Else ->
           invalid
       end;
@@ -79,13 +104,13 @@ get_packfile_object_data(Git, ObjectSha) ->
 
 get_packfile_with_object(Git, [Index|Rest], ObjectSha) ->
   PackIndex = git_dir(Git) ++ "/objects/pack/" ++ Index,
-  io:fwrite("Looking for ~p in ~p~n", [ObjectSha, PackIndex]),
+  %io:fwrite("Looking for ~p in ~p~n", [ObjectSha, PackIndex]),
   case file:read_file(PackIndex) of
     {ok, Data} ->
       case packindex:extract_packfile_index(Data) of
         {ok, IndexData} ->
-          io:fwrite("PackIndex Size:~p~n", [IndexData#index.size]),
-          io:fwrite("IndexData:~p~n", [IndexData]),
+          %io:fwrite("PackIndex Size:~p~n", [IndexData#index.size]),
+          %io:fwrite("IndexData:~p~n", [IndexData]),
           case packindex:object_offset(IndexData, ObjectSha) of
             {ok, Offset} ->
               Packfile = replace_string_ending(Index, ".idx", ".pack"),
