@@ -5,7 +5,7 @@
 -module(packindex).
 -export([extract_packfile_index/1, object_offset/2]).
 
--include("packindex.hrl").
+-include("git.hrl").
 
 %%%
 % get an object offset from an index record
@@ -33,7 +33,7 @@ extract_packfile_index(Data) ->
   {OffsetList, Data7} = extract_offsets(Data6, Size),
   {PackCs, Data8} = split_binary(Data7, 20),
   {_IdxCs, _Empty} = split_binary(Data8, 20),
-  Index = #index{header=Header, version=Version, size=Size, fanout=FanoutTable, 
+  Index = #index{header=Header, version=Version, size=Size, fanout=FanoutTable,
     shalist=ShaList, crclist=CrcList, offsets=OffsetList, packcs=hex:bin_to_hexstr(PackCs)},
   {ok, Index}.
 
@@ -85,3 +85,4 @@ extract_fanout(IndexData, Count, Fanout) ->
   {Fan, IndexDataRem} = split_binary(IndexData, 4), % fanout entry
   <<FanInt:32>> = Fan,
   extract_fanout(IndexDataRem, Count + 1, [FanInt|Fanout]).
+

@@ -3,9 +3,9 @@
 %%
 
 -module(git).
--export([open/1, read_object/2, object_exists/2]).
+-export([open/1, read_object/2, object_exists/2, rev_list/2]).
 
--include("packindex.hrl").
+-include("git.hrl").
 
 %%-define(cassandra_ZERO, 0).
 
@@ -29,6 +29,20 @@ open(Path) ->
 %print_log(Git, Ref) ->
   % traverse the reference, printing out all the log information to stdout
   %io:fwrite("Log:~n").
+
+rev_list(Git, Shas) ->
+  rev_list(Git, Shas, []).
+
+rev_list(Git, [Sha|Shas], Gathered) ->
+  Commit = commit(Git, Sha),
+  Parents = git_object:get_parents(Commit),
+  rev_list(Git, Parents ++ Shas, [Sha|Gathered]);
+rev_list(Git, [], Gathered) ->
+  Gathered.
+
+commit(Git, Sha) ->
+  {Type, Size, Data} = read_object(Git, Sha),
+  git_object:parse_commit(Data).
 
 git_dir(Git) ->
   {Path} = Git,
