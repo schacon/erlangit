@@ -80,7 +80,7 @@ extract_loose_object_data(CompData) ->
 get_packfile_object_data(Git, ObjectSha) ->
   case find_packfile_with_object(Git, ObjectSha) of
     {ok, PackFilePath, Offset} ->
-      packfile:get_packfile_data(PackFilePath, Offset);
+      packfile:get_packfile_data(Git, PackFilePath, Offset);
     _Else ->
       invalid
   end.
