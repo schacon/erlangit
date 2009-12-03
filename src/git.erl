@@ -8,11 +8,7 @@
 -include("git.hrl").
 
 %%-define(cassandra_ZERO, 0).
-
 %-record(git_dir, {path}).
-%-record(commit, {commit_sha, tree_sha, parents, author, committer, encoding, message}).
-
-% Cp = #commit{sha=Sha, tree=Tree},
 
 open(Path) ->
   % normalize the path (look for .git, etc)
@@ -31,18 +27,34 @@ open(Path) ->
   %io:fwrite("Log:~n").
 
 rev_list(Git, Shas) ->
-  rev_list(Git, Shas, []).
+  Graph = digraph:new(),
+  rev_list(Git, Graph, Shas),
+  digraph_utils:topsort(Graph).
 
-rev_list(Git, [Sha|Shas], Gathered) ->
+rev_list(Git, Graph, [Sha|Shas]) ->
   {ok, Commit} = commit(Git, Sha),
+  digraph:add_vertex(Graph, Sha),
   Parents = Commit#commit.parents,
-  rev_list(Git, Parents ++ Shas, [Sha|Gathered]);
-rev_list(_Git, [], Gathered) ->
-  Gathered.
+  AddParents = rev_list_add_edges(Graph, Sha, Parents),
+  rev_list(Git, Graph, AddParents ++ Shas);
+rev_list(_Git, Graph, []) ->
+  ok.
+
+rev_list_add_edges(Graph, Sha, [Parent|Rest]) ->
+  Vertex = case digraph:vertex(Graph, Parent) of
+    false ->
+      digraph:add_vertex(Graph, Parent);
+    _Else ->
+      []
+  end,
+  digraph:add_edge(Graph, Sha, Parent),
+  [Vertex|rev_list_add_edges(Graph, Sha, Rest)];
+rev_list_add_edges(Graph, Commit, []) ->
+  [].
 
 commit(Git, Sha) ->
   {_Type, _Size, Data} = read_object(Git, Sha),
-  git_object:parse_commit(Data).
+  git_object:parse_commit(Sha, Data).
 
 git_dir(Git) ->
   {Path} = Git,

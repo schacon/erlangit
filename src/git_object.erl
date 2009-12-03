@@ -5,11 +5,11 @@
 %% TODO: replace regexp:first_match with re
 
 -module(git_object).
--export([parse_commit/1]).
+-export([parse_commit/2]).
 
 -include("git.hrl").
 
-parse_commit(Data) ->
+parse_commit(Sha, Data) ->
   CommitString = binary_to_list(Data),
   {match, Offset, Len} = regexp:first_match(CommitString, "\n\n"),
   {Meta, Message} = lists:split(Offset + Len - 1, CommitString),
@@ -19,7 +19,7 @@ parse_commit(Data) ->
   Committer = extract_one(Meta, "committer (.*)"),
   Encoding  = extract_one(Meta, "encoding (.*)"),
   %io:format("Parents:~p~nTree:~p~nAuthor:~p~nMessage:~p~n~n", [Parents, Tree, Author, Message]),
-  Commit = #commit{tree=Tree, parents=Parents,
+  Commit = #commit{sha=Sha, tree=Tree, parents=Parents,
                    author=Author, committer=Committer,
                    encoding=Encoding, message=Message},
   {ok, Commit}.

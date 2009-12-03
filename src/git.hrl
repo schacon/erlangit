@@ -8,7 +8,8 @@
                 offsets,
                 packcs}).
 
--record(commit, {parents,
+-record(commit, {sha,
+                 parents,
                  tree,
                  author,
                  committer,
