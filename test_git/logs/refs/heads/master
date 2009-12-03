@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 a361a3163a1b521f277e3877232d94b787750c36 Scott Chacon <schacon@gmail.com> 1258278448 +0100	commit (initial): first commit
+a361a3163a1b521f277e3877232d94b787750c36 61fa970afbf82f79611220203213cd9562a809e3 Scott Chacon <schacon@gmail.com> 1258278496 +0100	commit: added test one
+61fa970afbf82f79611220203213cd9562a809e3 ef8285c69ceac3f2ff2fee154d3d6ad6a71fb826 Scott Chacon <schacon@gmail.com> 1258278527 +0100	commit: added test three
+ef8285c69ceac3f2ff2fee154d3d6ad6a71fb826 208fc4a6a08fb1e5136cf9943d79ad81097a0f36 Scott Chacon <schacon@gmail.com> 1258278581 +0100	commit: last commit outside
+208fc4a6a08fb1e5136cf9943d79ad81097a0f36 be62addb149d286893e2ec254e0dc783a871e8af Scott Chacon <schacon@gmail.com> 1258278712 +0100	commit: new rakefile
+be62addb149d286893e2ec254e0dc783a871e8af dd991a4966e8807d448305e67a9b3727efc6060c Scott Chacon <schacon@gmail.com> 1258278762 +0100	commit: rakefile three
+dd991a4966e8807d448305e67a9b3727efc6060c 25daa907ccb6feb267bfec70a130d5fe13e48a79 Scott Chacon <schacon@gmail.com> 1258278772 +0100	commit: rakefile four
+25daa907ccb6feb267bfec70a130d5fe13e48a79 8bbad744fe9597cc130e8ef7cfd201f36d9cba76 Scott Chacon <schacon@gmail.com> 1258278898 +0100	commit: test content
