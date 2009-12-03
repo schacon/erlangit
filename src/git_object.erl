@@ -2,6 +2,8 @@
 %% Git Object Parsers
 %%
 
+%% TODO: replace regexp:first_match with re
+
 -module(git_object).
 -export([parse_commit/1]).
 
@@ -11,11 +13,11 @@ parse_commit(Data) ->
   CommitString = binary_to_list(Data),
   {match, Offset, Len} = regexp:first_match(CommitString, "\n\n"),
   {Meta, Message} = lists:split(Offset + Len - 1, CommitString),
-  Parents = parse_commit_parents(Meta),
-  Tree =      extract_one(Meta, "tree (.*)"),
-  Author =    extract_one(Meta, "author (.*)"),
+  Parents   = parse_commit_parents(Meta),
+  Tree      = extract_one(Meta, "tree (.*)"),
+  Author    = extract_one(Meta, "author (.*)"),
   Committer = extract_one(Meta, "committer (.*)"),
-  Encoding =  extract_one(Meta, "encoding (.*)"),
+  Encoding  = extract_one(Meta, "encoding (.*)"),
   %io:format("Parents:~p~nTree:~p~nAuthor:~p~nMessage:~p~n~n", [Parents, Tree, Author, Message]),
   Commit = #commit{tree=Tree, parents=Parents,
                    author=Author, committer=Committer,

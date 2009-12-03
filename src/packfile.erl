@@ -52,9 +52,9 @@ read_object_data(_Git, IoDevice, 0, Size, _Shift, _OrigOffset, FileOffset, Norma
 read_ref_deltified_object_data(Git, IoDevice, Size, Offset, FileOffset, OrigOffset) ->
   {ok, Sha} = file:read(IoDevice, 20),
   HexSha = hex:bin_to_hexstr(Sha),
-  {TypeTerm, BaseSize, BaseData} = git:read_object(Git, HexSha),
+  {TypeTerm, _BaseSize, BaseData} = git:read_object(Git, HexSha),
   %io:fwrite("Base:~p~n", [BaseSize]),
-  {TypeTerm, DeltaSize, DeltaData} = read_object_data(Git, IoDevice, 0, Size, Offset, OrigOffset, FileOffset + 20, TypeTerm),
+  {TypeTerm, _DeltaSize, DeltaData} = read_object_data(Git, IoDevice, 0, Size, Offset, OrigOffset, FileOffset + 20, TypeTerm),
   %io:fwrite("DeltaData: ~p:~p:~p~n", [TypeTerm, DeltaSize, DeltaData]),
   PatchedData = patch_delta(DeltaData, BaseData),
   {TypeTerm, length(PatchedData), list_to_binary(PatchedData)}.
@@ -63,7 +63,7 @@ read_ofs_deltified_object_data(Git, IoDevice, Size, Offset, FileOffset, OrigOffs
   {ok, BaseOffset, BytesRead} = get_base_offset(IoDevice),
   NewOffset = OrigOffset - BaseOffset,
   %io:fwrite("BaseOffset: ~p:~p:~p~n", [NewOffset, OrigOffset, BaseOffset]),
-  {TypeTerm, BaseSize, BaseData} = read_packfile_object_offset(Git, IoDevice, NewOffset),
+  {TypeTerm, _BaseSize, BaseData} = read_packfile_object_offset(Git, IoDevice, NewOffset),
   file:position(IoDevice, FileOffset + BytesRead),
   {TypeTerm, _DeltaSize, DeltaData} = read_object_data(Git, IoDevice, 0, Size, Offset, OrigOffset, FileOffset + BytesRead, TypeTerm),
   %io:fwrite("DeltaData: ~p:~p:~p~n", [TypeTerm, DeltaSize, DeltaData]),
@@ -73,10 +73,10 @@ read_ofs_deltified_object_data(Git, IoDevice, Size, Offset, FileOffset, OrigOffs
 patch_delta(DeltaData, BaseData) ->
   DeltaList = binary_to_list(DeltaData),
   BaseList = binary_to_list(BaseData),
-  {ok, SrcSize, PosA} = patch_delta_header_size(DeltaList, 1),
+  {ok, _SrcSize, PosA} = patch_delta_header_size(DeltaList, 1),
   % SrcSize should == BaseData.size
   %io:fwrite("Patch:SrcSize : ~p:~p~n", [SrcSize, PosA]),
-  {ok, DestSize, PosB} = patch_delta_header_size(DeltaList, PosA),
+  {ok, _DestSize, PosB} = patch_delta_header_size(DeltaList, PosA),
   %io:fwrite("Patch:DestSize: ~p:~p~n", [DestSize, PosB]),
   PatchedData = patch_delta([], BaseList, DeltaList, PosB, length(DeltaList) + 1),
   %io:fwrite("PatchData: ~p~n", [length(PatchedData)]),
@@ -150,11 +150,11 @@ get_base_offset(_IoDevice, 0, Offset, BytesRead) ->
 inflate_object_data(Z, IoDevice, SoFar) ->
   case file:read(IoDevice, 4096) of
     {ok, Bytes} ->
-      Inflated = case catch zlib:inflate(Z, Bytes) of
+      _Inflated = case catch zlib:inflate(Z, Bytes) of
           {'EXIT', {'data_error', _Backtrace} } ->
               %io:format("zlib:inflate data_error,~n"),
               SoFar;
-          {'EXIT', Reason} ->
+          {'EXIT', _Reason} ->
               %io:format("zlib:inflate error -> [~p]~n", [Reason]),
               SoFar;
           [] ->

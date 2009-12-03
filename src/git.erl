@@ -37,11 +37,11 @@ rev_list(Git, [Sha|Shas], Gathered) ->
   {ok, Commit} = commit(Git, Sha),
   Parents = Commit#commit.parents,
   rev_list(Git, Parents ++ Shas, [Sha|Gathered]);
-rev_list(Git, [], Gathered) ->
+rev_list(_Git, [], Gathered) ->
   Gathered.
 
 commit(Git, Sha) ->
-  {Type, Size, Data} = read_object(Git, Sha),
+  {_Type, _Size, Data} = read_object(Git, Sha),
   git_object:parse_commit(Data).
 
 git_dir(Git) ->
