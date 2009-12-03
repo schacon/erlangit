@@ -18,17 +18,17 @@ open(Path) ->
   % normalize the path (look for .git, etc)
   {Path}.
 
-references(Git) ->
+%references(Git) ->
   % read all the refs from disk/packed-refs and return an array
-  {Git}.
+  %{Git}.
 
-print_branches(Git) ->
+%print_branches(Git) ->
   % print branches out to stdout
-  io:fwrite("Branches:~n").
+  %io:fwrite("Branches:~n").
 
-print_log(Git, Ref) ->
+%print_log(Git, Ref) ->
   % traverse the reference, printing out all the log information to stdout
-  io:fwrite("Log:~n").
+  %io:fwrite("Log:~n").
 
 git_dir(Git) ->
   {Path} = Git,
@@ -125,20 +125,14 @@ get_packfile_with_object(Git, [Index|Rest], ObjectSha) ->
     _Else ->
       invalid
   end;
-get_packfile_with_object(Git, [], ObjectSha) ->
+get_packfile_with_object(_Git, [], _ObjectSha) ->
   not_found.
 
 replace_string_ending(String, Ending, NewEnding) ->
   Base = string:substr(String, 1, length(String) - length(Ending)),
   Base ++ NewEnding.
 
-string_ends_with(File, Ending) ->  
+string_ends_with(File, Ending) ->
   FileEnding = string:substr(File, length(File) - length(Ending) + 1, length(Ending)),
   FileEnding =:= Ending.
-
-
-
-
-
-
 
