@@ -34,8 +34,8 @@ rev_list(Git, Shas) ->
   rev_list(Git, Shas, []).
 
 rev_list(Git, [Sha|Shas], Gathered) ->
-  Commit = commit(Git, Sha),
-  Parents = git_object:get_parents(Commit),
+  {ok, Commit} = commit(Git, Sha),
+  Parents = Commit#commit.parents,
   rev_list(Git, Parents ++ Shas, [Sha|Gathered]);
 rev_list(Git, [], Gathered) ->
   Gathered.
