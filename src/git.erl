@@ -3,7 +3,7 @@
 %%
 
 -module(git).
--export([open/1, read_object/2, object_exists/2, rev_list/2, commit/2]).
+-export([open/1, object_data/2, object/2, object_exists/2, rev_list/2]).
 
 -include("git.hrl").
 
@@ -23,7 +23,7 @@ rev_list(Git, Shas) ->
   digraph_utils:topsort(Graph).
 
 rev_list(Git, Graph, [Sha|Shas]) ->
-  {ok, Commit} = commit(Git, Sha),
+  {ok, Commit} = object(Git, Sha),
   digraph:add_vertex(Graph, Sha),
   Parents = Commit#commit.parents,
   AddParents = rev_list_add_edges(Graph, Sha, Parents),
@@ -43,9 +43,9 @@ rev_list_add_edges(Graph, Sha, [Parent|Rest]) ->
 rev_list_add_edges(_Graph, _Commit, []) ->
   [].
 
-commit(Git, Sha) ->
-  {_Type, _Size, Data} = read_object(Git, Sha),
-  git_object:parse_commit(Sha, Data).
+object(Git, Sha) ->
+  {Type, _Size, Data} = object_data(Git, Sha),
+  git_object:parse_object(Sha, Data, Type).
 
 git_dir(Git) ->
   {Path} = Git,
@@ -68,7 +68,8 @@ object_exists(Git, ObjectSha) ->
 % get the raw object data out of loose or packed formats
 % see if the object is loose, read the data
 % else check the packfile indexes and get the object out of a packfile
-read_object(Git, ObjectSha) ->
+% TODO: cache calls to this (at least for commit/tree objects)
+object_data(Git, ObjectSha) ->
   LoosePath = get_loose_object_path(Git, ObjectSha),
   case file:read_file(LoosePath) of
     {ok, Data} ->

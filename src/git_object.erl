@@ -5,11 +5,20 @@
 %% TODO: replace regexp:first_match with re
 
 -module(git_object).
--export([parse_commit/2]).
+-export([parse_object/3]).
 
 -include("git.hrl").
 
-parse_commit(Sha, Data) ->
+parse_object(Sha, Data, blob) ->
+  binary_to_list(Data);
+
+parse_object(Sha, Data, tree) ->
+  % mode(6) SP Filename \0 SHA(20)
+  TreeString = binary_to_list(Data),
+  Tree = parse_tree_string(TreeString),
+  {ok, Tree};
+
+parse_object(Sha, Data, commit) ->
   CommitString = binary_to_list(Data),
   {match, Offset, Len} = regexp:first_match(CommitString, "\n\n"),
   {Meta, Message} = lists:split(Offset + Len - 1, CommitString),
@@ -27,6 +36,21 @@ parse_commit(Sha, Data) ->
 parse_commit_parents(Data) ->
   Parents = extract_multi(Data, "parent (.*)"),
   extract_matches(Parents).
+
+parse_tree_string([]) ->
+  [];
+parse_tree_string(Tree) ->
+  {Mode, Rest} = read_until(Tree, 32),
+  {FileName, Rest2} = read_until(Rest, 0),
+  {Sha, Rest3} = lists:split(20, Rest2),
+  ShaHex = hex:list_to_hexstr(Sha),
+  TreeObj = #tree{sha=ShaHex, mode=Mode, name=FileName},
+  [TreeObj | parse_tree_string(Rest3)].
+
+read_until(String, Find) ->
+  {Front, Back} = lists:splitwith(fun(A) -> A /= Find end, String),
+  {Found, Rest} = lists:split(1, Back),
+  {Front, Rest}.
 
 extract_matches([Match|Rest]) ->
   [_Full, Data] = Match,
@@ -50,3 +74,4 @@ extract_one(Data, Regex) ->
     _Else ->
       ""
   end.
+

@@ -15,3 +15,6 @@
                  committer,
                  encoding,
                  message}).
+
+-record(tree, {mode, name, sha}).
+

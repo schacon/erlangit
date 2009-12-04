@@ -52,7 +52,7 @@ read_object_data(_Git, IoDevice, 0, Size, _Shift, _OrigOffset, FileOffset, Norma
 read_ref_deltified_object_data(Git, IoDevice, Size, Offset, FileOffset, OrigOffset) ->
   {ok, Sha} = file:read(IoDevice, 20),
   HexSha = hex:bin_to_hexstr(Sha),
-  {TypeTerm, _BaseSize, BaseData} = git:read_object(Git, HexSha),
+  {TypeTerm, _BaseSize, BaseData} = git:object_data(Git, HexSha),
   %io:fwrite("Base:~p~n", [BaseSize]),
   {TypeTerm, _DeltaSize, DeltaData} = read_object_data(Git, IoDevice, 0, Size, Offset, OrigOffset, FileOffset + 20, TypeTerm),
   %io:fwrite("DeltaData: ~p:~p:~p~n", [TypeTerm, DeltaSize, DeltaData]),
