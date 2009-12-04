@@ -3,12 +3,11 @@
 %%
 
 -module(git).
--export([open/1, read_object/2, object_exists/2, rev_list/2]).
+-export([open/1, read_object/2, object_exists/2, rev_list/2, commit/2]).
 
 -include("git.hrl").
 
 %%-define(cassandra_ZERO, 0).
-%-record(git_dir, {path}).
 
 open(Path) ->
   % normalize the path (look for .git, etc)
@@ -17,14 +16,6 @@ open(Path) ->
 %references(Git) ->
   % read all the refs from disk/packed-refs and return an array
   %{Git}.
-
-%print_branches(Git) ->
-  % print branches out to stdout
-  %io:fwrite("Branches:~n").
-
-%print_log(Git, Ref) ->
-  % traverse the reference, printing out all the log information to stdout
-  %io:fwrite("Log:~n").
 
 rev_list(Git, Shas) ->
   Graph = digraph:new(),
@@ -37,7 +28,7 @@ rev_list(Git, Graph, [Sha|Shas]) ->
   Parents = Commit#commit.parents,
   AddParents = rev_list_add_edges(Graph, Sha, Parents),
   rev_list(Git, Graph, AddParents ++ Shas);
-rev_list(_Git, Graph, []) ->
+rev_list(_Git, _Graph, []) ->
   ok.
 
 rev_list_add_edges(Graph, Sha, [Parent|Rest]) ->
@@ -49,7 +40,7 @@ rev_list_add_edges(Graph, Sha, [Parent|Rest]) ->
   end,
   digraph:add_edge(Graph, Sha, Parent),
   [Vertex|rev_list_add_edges(Graph, Sha, Rest)];
-rev_list_add_edges(Graph, Commit, []) ->
+rev_list_add_edges(_Graph, _Commit, []) ->
   [].
 
 commit(Git, Sha) ->
