@@ -1,0 +1,30 @@
+TODO v1
+============
+
+* get references
+* rev-parse
+
+* parse tree objects
+* parse tag objects
+
+* write commit, tree, tag, blob objects
+* write/update references
+
+TODO v2
+============
+
+* diff
+* merge-base calculation
+* simple merges
+
+* read index file (ls-files)
+* write index entries (read-tree)
+
+* revlist caching
+* incremental log
+
+* git/http fetch
+* git/http/ssh push
+
+* git/http serve
+
