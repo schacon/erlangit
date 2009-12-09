@@ -1,3 +1,4 @@
+%% -*- erlang-indent-level: 2 -*-
 %%
 %% Partial Git Implementation
 %%
@@ -83,17 +84,19 @@ get_loose_object_path(Git, ObjectSha) ->
   Second = string:substr(ObjectSha, 3, 38),
   git_dir(Git) ++ "/objects/" ++ First ++ "/" ++ Second.
 
-%% TODO: make this more efficient - this is ridiculous
-%%       should be able to do this as a binary
 extract_loose_object_data(CompData) ->
-  RawData = binary_to_list(zlib:uncompress(CompData)),
-  Split = string:chr(RawData, 0),
-  {Header, Data} = lists:split(Split, RawData),
-  Split2 = string:chr(Header, 32),
-  Header2 = lists:sublist(Header, length(Header) - 1),
-  {Type, Size} = lists:split(Split2, Header2),
-  Type2 = lists:sublist(Type, length(Type) - 1),
-  {binary_to_atom(list_to_binary(Type2), latin1), list_to_integer(Size), list_to_binary(Data)}.
+  extract_loose_object_1(zlib:uncompress(CompData), []).
+
+extract_loose_object_1(<<$\s,T/binary>>, Type0) ->
+  Type = list_to_atom(lists:reverse(Type0)),
+  extract_loose_object_2(T, Type, 0);
+extract_loose_object_1(<<C,T/binary>>, Type) ->
+  extract_loose_object_1(T, [C|Type]).
+
+extract_loose_object_2(<<0,Data/binary>>, Type, Sz) ->
+  {Type, Sz, Data};
+extract_loose_object_2(<<Digit,T/binary>>, Type, Sz) ->
+  extract_loose_object_2(T, Type, Sz*10+Digit-$0).
 
 get_packfile_object_data(Git, ObjectSha) ->
   case find_packfile_with_object(Git, ObjectSha) of
