@@ -4,11 +4,15 @@ TODO v1
 * get references
 * rev-parse
 
-* parse tree objects
 * parse tag objects
+* parse author data
 
 * write commit, tree, tag, blob objects
 * write/update references
+
+* performance - 
+    spin up an OTP server so we don't have to reparse the index
+    files each time?
 
 TODO v2
 ============
