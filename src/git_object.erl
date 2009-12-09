@@ -9,10 +9,10 @@
 
 -include("git.hrl").
 
-parse_object(Sha, Data, blob) ->
+parse_object(_Sha, Data, blob) ->
   binary_to_list(Data);
 
-parse_object(Sha, Data, tree) ->
+parse_object(_Sha, Data, tree) ->
   % mode(6) SP Filename \0 SHA(20)
   TreeString = binary_to_list(Data),
   Tree = parse_tree_string(TreeString),
@@ -49,7 +49,7 @@ parse_tree_string(Tree) ->
 
 read_until(String, Find) ->
   {Front, Back} = lists:splitwith(fun(A) -> A /= Find end, String),
-  {Found, Rest} = lists:split(1, Back),
+  {_Found, Rest} = lists:split(1, Back),
   {Front, Rest}.
 
 extract_matches([Match|Rest]) ->
