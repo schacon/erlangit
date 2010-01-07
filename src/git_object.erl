@@ -20,7 +20,7 @@ parse_object(_Sha, Data, tree) ->
 
 parse_object(Sha, Data, commit) ->
   CommitString = binary_to_list(Data),
-  {match, Offset, Len} = regexp:first_match(CommitString, "\n\n"),
+  {match, [{Offset, Len}]} = re:run(CommitString, "\n\n"),
   {Meta, Message} = lists:split(Offset + Len - 1, CommitString),
   Parents   = parse_commit_parents(Meta),
   Tree      = extract_one(Meta, "tree (.*)"),
