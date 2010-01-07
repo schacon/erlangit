@@ -1,3 +1,4 @@
+-record(git, {path}).
 
 -record(index, {header,
                 version,

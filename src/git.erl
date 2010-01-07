@@ -16,7 +16,7 @@
 
 open(Path) ->
   % normalize the path (look for .git, etc)
-  {Path}.
+  #git{path = Path}.
 
 %references(Git) ->
   % read all the refs from disk/packed-refs and return an array
@@ -53,8 +53,7 @@ object(Git, Sha) ->
   git_object:parse_object(Sha, Data, Type).
 
 git_dir(Git) ->
-  {Path} = Git,
-  Path.
+  Git#git.path.
 
 object_exists(Git, ObjectSha) ->
   LoosePath = get_loose_object_path(Git, ObjectSha),
