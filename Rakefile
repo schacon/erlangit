@@ -16,8 +16,7 @@ end
 
 task :test => :chdir do
   sh "erlc #{ERLC_FLAGS} -DTEST -I etest src/*.erl"
-  # sh "erl -pa ebin -run git test -run git_io test -run erlang halt"
-  sh "erl -pa ebin -eval \"git:test(), git_io:test(), erlang:halt().\""
+  sh "etest/run.es"
 end
 
 task :console => :chdir do
