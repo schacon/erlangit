@@ -5,6 +5,10 @@
 -module(git_io).
 -export([print_log/2, print_tree/1]).
 
+-ifdef(TEST).
+-include("etest/git_io_test.erl").
+-endif.
+
 -include("git.hrl").
 
 %print_branches(Git) ->

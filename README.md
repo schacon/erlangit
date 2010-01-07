@@ -10,6 +10,20 @@ structures.
 It is currently slower than a slow-motion replay of a cold-weather molasses
 drip-race judged by sloths who just took Nyquil. Slowly.
 
+Installation
+====================
+
+To compile ErlanGit, run the following from within the project directory:
+
+	$ rake build
+
+To test that everything is working properly, run the tests:
+
+	$ rake
+
+When you run the test, the project is built with tests enabled. Before
+deploying to a production system make sure you do a normal build.
+
 Basic API
 ====================
 

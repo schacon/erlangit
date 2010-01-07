@@ -6,6 +6,10 @@
 -module(git).
 -export([open/1, object_data/2, object/2, object_exists/2, rev_list/2]).
 
+-ifdef(TEST).
+-include("etest/git_test.erl").
+-endif.
+
 -include("git.hrl").
 
 %%-define(cassandra_ZERO, 0).
